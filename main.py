@@ -16,12 +16,14 @@ def create_json(group):
     :param group: type=Dataframe, Grouped Dataframe that contains customer data
     :return: JSON
     """
+
     customer_json = {
         'salutation': group['salutation'].iloc[0],
-        'last_name': group['last_name'].iloc[0],
-        'first_name': group['first_name'].iloc[0],
-        'email': group['email'].iloc[0],
-        'purchases': group[['product_id', 'price', 'currency', 'quantity', 'purchased_at']].to_dict('records')
+        'last_name': group['last_name'].fillna('').iloc[0],
+        'first_name': group['first_name'].fillna('').iloc[0],
+        'email': group['email'].fillna('').iloc[0],
+        'purchases': group[['product_id', 'price', 'currency', 'quantity', 'purchased_at']].to_dict('records') if
+        group['product_id'].fillna(-1).iloc[0] != -1 else []
     }
     return customer_json
 
@@ -33,7 +35,7 @@ def process_data(customers_df: pd.DataFrame, purchases_df: pd.DataFrame):
     :param purchases_df: type=Dataframe, Dataframe of Purchases Data
     :return: List of JSON
     """
-    new_df = pd.merge(customers_df, purchases_df, on='customer_id')
+    new_df = pd.merge(customers_df, purchases_df, on='customer_id', how='outer')
     new_df.rename(columns={'lastname': 'last_name', 'firstname': 'first_name', 'date': 'purchased_at'}, inplace=True)
     new_df['salutation'] = new_df['title'].map({1: 'Female', 2: 'Male'})
     new_df['currency'] = new_df['currency'].map({'EUR': 'euro', 'USD': 'dollars'})
